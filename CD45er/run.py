@@ -73,7 +73,7 @@ def annotate_reads(bam,E):
     
     return(df)
 
-def isoform_quantification(df,E,max_fraglen=500):
+def isoform_quantification(df,E,mu=None,sig2=None,max_fraglen=500):
 
     exon_map = {'A':4,'B':5,'C':6}
 
@@ -121,21 +121,29 @@ def isoform_quantification(df,E,max_fraglen=500):
     compat = np.array([[seg in iso for iso in isoforms] for seg in df['seg']])
 
     # Make estiates of fragment length params
-    mu = np.median(frag_len.min(axis=1))
-    sig2 = frag_len[frag_len<=600].std()**2
+    
+    if (mu is None) and (sig2 is None):
+        mu = np.median(frag_len.min(axis=1))
+        sig2 = frag_len[frag_len<=600].std()**2
+        
+        estimate_fraglen_dist = True
+    else:
+        estimate_fraglen_dist = False
     pi = np.ones(len(isoforms))/len(isoforms)
 
-    mu,sig2,pi,dfup = EM(df,frag_len,compat,mu,sig2,pi)
+    mu,sig2,pi,dfup = EM(df,frag_len,compat,mu,sig2,pi,estimate_fraglen_dist=estimate_fraglen_dist)
 
     print('Estimated parameters:')
-    print(f'mu:{mu},var:{sig2}')
+
+    if estimate_fraglen_dist:
+        print(f'mu:{mu},var:{sig2}')
 
     pis = pd.Series(pi,index=isoforms)
     print(pis)
 
     return(mu,sig2,pis,dfup)
 
-def EM(df,frag_len,compat,mu,sig2,pi,nit=100):
+def EM(df,frag_len,compat,mu,sig2,pi,nit=100,estimate_fraglen_dist=True):
 
     for i in range(0,nit):
 
@@ -164,10 +172,10 @@ def EM(df,frag_len,compat,mu,sig2,pi,nit=100):
         ## M-step
 
         # Update params
-        est_fraglen = (dfup[isoforms]*frag_len).sum(axis=1)
-        mu=est_fraglen.mean()
-    
-        var=((dfup[isoforms]*(frag_len - mu)**2)).sum().sum()/dfup[isoforms].sum().sum()
+        if estimate_fraglen_dist:
+            est_fraglen = (dfup[isoforms]*frag_len).sum(axis=1)
+            mu=est_fraglen.mean()
+            var=((dfup[isoforms]*(frag_len - mu)**2)).sum().sum()/dfup[isoforms].sum().sum()
     
         pi = (dfup[isoforms].sum()/dfup[isoforms].sum().sum()).values
 
