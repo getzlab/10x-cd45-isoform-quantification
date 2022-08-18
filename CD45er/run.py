@@ -18,7 +18,7 @@ def annotate_reads(bam,E):
     # Maps genomic position to exon number
     pos_min = E['st'].min()
     pos_max = E['en'].max()
-    chrom = E['chr'].unique()[0].astype(str)
+    chrom = str(E['chr'].unique()[0])
     exons = np.zeros(pos_max-pos_min).astype(int)
     for ind,g in E.iterrows():
         exons[(g['st']-pos_min):(g['en']-pos_min)]=ind+1
