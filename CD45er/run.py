@@ -148,7 +148,10 @@ def isoform_quantification(df,E,mu=None,sig2=None,max_fraglen=500):
     pis = pd.Series(pi,index=isoforms)
     print(pis)
 
-    return(mu,sig2,pis,dfup)
+    # Deduplicate using UMIs
+    p_iso = dfup[['CB','UB'] + list(isoforms)].drop_duplicates().reset_index(drop=True)
+
+    return(mu,sig2,pis,p_iso)
 
 # Run EM engine
 def EM(df,frag_len,compat,mu,sig2,pi,nit=100,estimate_fraglen_dist=True):
@@ -184,7 +187,7 @@ def EM(df,frag_len,compat,mu,sig2,pi,nit=100,estimate_fraglen_dist=True):
             est_fraglen = (dfup[isoforms]*frag_len).sum(axis=1)
             mu=est_fraglen.mean()
             var=((dfup[isoforms]*(frag_len - mu)**2)).sum().sum()/dfup[isoforms].sum().sum()
-    
+
         pi = (dfup[isoforms].sum()/dfup[isoforms].sum().sum()).values
 
     return(mu,sig2,pi,dfup)
