@@ -188,7 +188,7 @@ def EM(df,frag_len,compat,mu,sig2,pi,nit=100,estimate_fraglen_dist=True):
             mu=est_fraglen.mean()
             var=((dfup[isoforms]*(frag_len - mu)**2)).sum().sum()/dfup[isoforms].sum().sum()
 
-        pi = (dfup[isoforms].sum()/dfup[isoforms].sum().sum()).values
+        pi = p.sum()/p.sum().sum()
 
     return(mu,sig2,pi,dfup)
 
